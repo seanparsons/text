@@ -180,6 +180,13 @@ benchmark kind ~Env{..} =
             [ benchT   $ nf (T.take (ta_len `div` 3)) ta
             , benchTL  $ nf (TL.take (tla_len `div` 3)) tla
             ]
+        , bgroup "drop take"
+            [ benchT   $ nf (T.take (ta_len `div` 3) . T.drop (ta_len `div` 3)) ta
+            , benchTL  $ nf (TL.take (tla_len `div` 3) . TL.drop (tla_len `div` 3)) tla
+            ]
+        , bgroup "substring"
+            [ benchT   $ nf (T.substring (ta_len `div` 3) ((ta_len `div` 3) * 2)) ta
+            ]
         , bgroup "tail"
             [ benchT   $ nf T.tail ta
             , benchTL  $ nf TL.tail tla

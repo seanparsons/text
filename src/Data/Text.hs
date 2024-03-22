@@ -138,6 +138,7 @@ module Data.Text
     , takeEnd
     , drop
     , dropEnd
+    , substring
     , takeWhile
     , takeWhileEnd
     , dropWhile
@@ -1265,6 +1266,23 @@ unfoldrN n f s = unstream (S.unfoldrN n (firstf safe . f) s)
 -- -----------------------------------------------------------------------------
 -- * Substrings
 
+--  | /O(n)/ 'substring' @start@ @end@, applied to a 'Text', returns the segment of
+--  the 'Text' from index @start@ to (but not including) index @end@.
+substring :: Int -> Int -> Text -> Text
+substring start end t@(Text arr off len)
+    | end < 1      = empty
+    | start >= end = empty
+    | dropBy < 0   = empty
+    | newLen == 0  = empty
+    | otherwise    = Text arr newOff adjustedLen
+  where
+    flooredStart = max 0 start
+    newOff = off + dropBy
+    dropBy = measureOffInternal flooredStart arr off len
+    newLen = measureOffInternal (end - flooredStart) arr newOff (len - dropBy)
+    adjustedLen = if newLen < 0 then len - dropBy else newLen
+{-# INLINE [1] substring #-}
+
 -- | /O(n)/ 'take' @n@, applied to a 'Text', returns the prefix of the
 -- 'Text' of length @n@, or the 'Text' itself if @n@ is greater than
 -- the length of the Text.
@@ -1276,6 +1294,17 @@ take n t@(Text arr off len)
   where
     m = measureOff n t
 {-# INLINE [1] take #-}
+
+-- | /O(n)/ This is measureOff but with the fields of 'Text' instead of the 'Text'
+-- value itself.
+--
+-- Shouldn't really be exposed as it's more for the speedier use of something that
+-- needs to use the internal values more than once.
+measureOffInternal :: Int -> A.Array -> Int -> Int -> Int
+measureOffInternal !n (A.ByteArray arr) !off !len = if len == 0 then 0 else
+  cSsizeToInt $
+    measure_off arr (intToCSize off) (intToCSize len) (intToCSize n)
+{-# INLINE [1] measureOffInternal #-}
 
 -- | /O(n)/ If @t@ is long enough to contain @n@ characters, 'measureOff' @n@ @t@
 -- returns a non-negative number, measuring their size in 'Word8'. Otherwise,

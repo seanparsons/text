@@ -32,6 +32,7 @@ sf_take (applyFun -> p) n
 t_take n          = L.take n      `eqP` (unpackS . T.take n)
 t_takeEnd n       = (L.reverse . L.take n . L.reverse) `eqP`
                     (unpackS . T.takeEnd n)
+t_d_t_substring s e = (T.substring s e) `eq` (\t -> T.take (e - (max s 0)) (T.drop (max s 0) t))
 tl_take n         = L.genericTake n      `eqP` (unpackS . TL.take n)
 tl_take_maxBound m = let n = fromIntegral (m :: Int) + fromIntegral (maxBound :: Int) in
                     L.genericTake n      `eqP` (unpackS . TL.take n)
@@ -322,6 +323,7 @@ testSubstrings =
       testProperty "tl_drop_maxBound" tl_drop_maxBound,
       testProperty "tl_dropEnd" tl_dropEnd,
       testProperty "tl_dropEnd_maxBound" tl_dropEnd_maxBound,
+      testProperty "t_d_t_substring" t_d_t_substring,
       testProperty "s_take_drop" s_take_drop,
       testProperty "s_take_drop_s" s_take_drop_s,
       testProperty "s_takeWhile" s_takeWhile,
